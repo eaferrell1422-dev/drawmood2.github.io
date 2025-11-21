@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DrawMood</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', cursive, sans-serif;
+            background: linear-gradient(135deg, #a8e063 0%, #56ab2f 50%, #56CCF2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 3.5em;
+            color: #2980b9;
+            margin-bottom: 10px;
+            font-weight: 400;
+        }
+
+        .tagline {
+            font-size: 1.2em;
+            color: #555;
+            font-style: italic;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .drawing-area {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .entry-header {
+            margin-bottom: 20px;
+        }
+
+        .mood-question {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .entry-header input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', cursive, sans-serif;
+            margin-bottom: 10px;
+            transition: border 0.3s;
+        }
+
+        .entry-header input:focus {
+            outline: none;
+            border-color: #2980b9;
+        }
+
+        .entry-header textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', cursive, sans-serif;
+            margin-bottom: 10px;
+            transition: border 0.3s;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .entry-header textarea:focus {
+            outline: none;
+            border-color: #2980b9;
+        }
+
+        .char-counter {
+            text-align: right;
+            color: #888;
+            font-size: 0.85em;
+            margin-top: -5px;
+            margin-bottom: 10px;
+        }
+
+        .char-counter.warning {
+            color: #e67e22;
+        }
+
+        .char-counter.limit {
+            color: #e74c3c;
+        }
+
+        .entry-date {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        #drawingCanvas {
+            width: 100%;
+            height: 500px;
+            border: 3px solid #f0f0f0;
+            border-radius: 15px;
+            cursor: crosshair;
+            background: #fff;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .tools {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .tools-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            width: 100%;
+        }
+
+        .tool-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-dot {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 3px solid transparent;
+        }
+
+        .color-dot:hover {
+            transform: scale(1.15);
+        }
+
+        .color-dot.active {
+            border-color: #2980b9;
+            box-shadow: 0 0 0 2px white, 0 0 0 4px #2980b9;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', cursive, sans-serif;
+            font-size: 0.95em;
+            transition: all 0.3s;
+            background: #2980b9;
+            color: white;
+            box-shadow: 0 4px 15px rgba(41, 128, 185, 0.3);
+        }
+
+        .btn:hover {
+            background: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(41, 128, 185, 0.4);
+        }
+
+        .btn.secondary {
+            background: #95a5a6;
+            box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+        }
+
+        .btn.secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .journal-entries {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .journal-entries h2 {
+            color: #2980b9;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            font-weight: 400;
+        }
+
+        .view-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 8px 15px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', cursive, sans-serif;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #2980b9;
+            color: white;
+        }
+
+        .tab:hover {
+            background: #e0e0e0;
+        }
+
+        .tab.active:hover {
+            background: #3498db;
+        }
+
+        .entry-card {
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid #2980b9;
+        }
+
+        .entry-card:hover {
+            background: #f0f0f0;
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .entry-card h3 {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .entry-card .date {
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .entry-card .preview {
+            width: 100%;
+            height: 100px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-top: 10px;
+        }
+
+        .entry-text-preview {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 8px;
+            line-height: 1.4;
+            max-height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .trash-indicator {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.75em;
+            margin-left: 8px;
+        }
+
+        .restore-notice {
+            font-size: 0.8em;
+            color: #e67e22;
+            margin-top: 5px;
+        }
+
+        .entry-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .entry-actions button {
+            padding: 5px 12px;
+            font-size: 0.85em;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        .brush-size {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brush-size input {
+            width: 100px;
+        }
+
+        input[type="range"] {
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #2980b9;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #2980b9;
+            cursor: pointer;
+            border: none;
+        }
+
+        .stats {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .stats h3 {
+            color: #2980b9;
+            margin-bottom: 15px;
+            font-weight: 400;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #2980b9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h3 {
+            color: #2980b9;
+            margin-bottom: 20px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 DrawMood</h1>
+            <p class="tagline">Draw your thoughts & feelings, one entry at a time!</p>
+        </header>
+
+        <div class="main-content">
+            <div class="drawing-area">
+                <div class="entry-header">
+                    <div class="mood-question">How are you feeling today? 😊</div>
+                    <input type="text" id="entryTitle" placeholder="Entry title..." value="">
+                    <textarea id="entryText" placeholder="Write your thoughts, ideas, or notes here... (500 character limit)"></textarea>
+                    <div class="char-counter" id="charCounter">0 / 500</div>
+                    <div class="entry-date" id="currentDate"></div>
+                </div>
+
+                <canvas id="drawingCanvas"></canvas>
+
+                <div class="tools">
+                    <div class="tools-row">
+                        <div class="tool-section">
+                            <div class="color-dot active" style="background: #2c3e50;" data-color="#2c3e50"></div>
+                            <div class="color-dot" style="background: #ffffff; border: 2px solid #ddd;" data-color="#ffffff"></div>
+                            <div class="color-dot" style="background: #e74c3c;" data-color="#e74c3c"></div>
+                            <div class="color-dot" style="background: #3498db;" data-color="#3498db"></div>
+                            <div class="color-dot" style="background: #2ecc71;" data-color="#2ecc71"></div>
+                            <div class="color-dot" style="background: #f39c12;" data-color="#f39c12"></div>
+                            <div class="color-dot" style="background: #9b59b6;" data-color="#9b59b6"></div>
+                            <div class="color-dot" style="background: #1abc9c;" data-color="#1abc9c"></div>
+                        </div>
+
+                        <div class="brush-size">
+                            <span>Brush:</span>
+                            <input type="range" id="brushSize" min="1" max="30" value="3">
+                            <span id="sizeDisplay">3px</span>
+                        </div>
+
+                        <button class="btn secondary" onclick="clearCanvas()">Clear</button>
+                        <button class="btn" onclick="saveEntry()">Save Entry</button>
+                    </div>
+                    <div class="tools-row">
+                        <button class="btn secondary" onclick="exportData()">💾 Export Backup</button>
+                        <button class="btn secondary" onclick="document.getElementById('importFile').click()">📂 Import Backup</button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="stats">
+                    <h3>Journal Stats</h3>
+                    <div class="stat-item">
+                        <span>Total Entries</span>
+                        <span class="stat-value" id="totalEntries">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>This Month</span>
+                        <span class="stat-value" id="monthEntries">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Current Streak</span>
+                        <span class="stat-value" id="streakDays">0 days</span>
+                    </div>
+                </div>
+
+                <div class="journal-entries">
+                    <h2>Past Entries</h2>
+                    <div class="view-tabs">
+                        <button class="tab active" onclick="switchView('active')">Active</button>
+                        <button class="tab" onclick="switchView('trash')">Trash</button>
+                    </div>
+                    <div id="entriesList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <h3>Move to Trash?</h3>
+            <p>This entry will be moved to trash and automatically deleted after 30 days. You can restore it anytime before then.</p>
+            <div class="modal-actions">
+                <button class="btn secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn" onclick="confirmDelete()">Move to Trash</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="permanentDeleteModal">
+        <div class="modal-content">
+            <h3>Permanently Delete?</h3>
+            <p>This will permanently delete the entry. This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn secondary" onclick="closePermanentDeleteModal()">Cancel</button>
+                <button class="btn" onclick="confirmPermanentDelete()">Delete Forever</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const entryTitle = document.getElementById('entryTitle');
+        const entryText = document.getElementById('entryText');
+        const charCounter = document.getElementById('charCounter');
+        const currentDate = document.getElementById('currentDate');
+        const entriesList = document.getElementById('entriesList');
+        const brushSizeInput = document.getElementById('brushSize');
+        const sizeDisplay = document.getElementById('sizeDisplay');
+
+        const MAX_CHARS = 500;
+        let isDrawing = false;
+        let currentColor = '#2c3e50';
+        let brushSize = 3;
+        let entries = [];
+        let trashedEntries = [];
+        let currentEntryId = null;
+        let deleteEntryId = null;
+        let currentView = 'active';
+
+        entryText.addEventListener('input', () => {
+            const length = entryText.value.length;
+            charCounter.textContent = `${length} / ${MAX_CHARS}`;
+            
+            if (length >= MAX_CHARS) {
+                charCounter.classList.add('limit');
+                charCounter.classList.remove('warning');
+                entryText.value = entryText.value.substring(0, MAX_CHARS);
+            } else if (length >= MAX_CHARS * 0.9) {
+                charCounter.classList.add('warning');
+                charCounter.classList.remove('limit');
+            } else {
+                charCounter.classList.remove('warning', 'limit');
+            }
+        });
+
+        function saveEntries() {
+            try {
+                const data = {
+                    entries: entries,
+                    trashedEntries: trashedEntries
+                };
+                // Use in-memory storage - data persists only during session
+                window.journalData = data;
+            } catch (e) {
+                console.error("Failed to save entries", e);
+            }
+        }
+
+        function loadEntries() {
+            try {
+                if (window.journalData) {
+                    entries = window.journalData.entries || [];
+                    trashedEntries = window.journalData.trashedEntries || [];
+                    cleanupOldTrash();
+                }
+            } catch (e) {
+                console.error("Failed to load entries", e);
+                entries = [];
+                trashedEntries = [];
+            }
+        }
+
+        function cleanupOldTrash() {
+            const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+            trashedEntries = trashedEntries.filter(entry => {
+                return entry.trashedDate && entry.trashedDate > thirtyDaysAgo;
+            });
+            saveEntries();
+        }
+
+        loadEntries();
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            const currentDrawing = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            ctx.putImageData(currentDrawing, 0, 0);
+        }
+        
+        function setupCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        setupCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        function updateDate() {
+            const now = new Date();
+            currentDate.textContent = now.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        updateDate();
+
+        document.querySelectorAll('.color-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                currentColor = dot.dataset.color;
+                document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+            });
+        });
+
+        brushSizeInput.addEventListener('input', (e) => {
+            brushSize = e.target.value;
+            sizeDisplay.textContent = brushSize + 'px';
+        });
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (e.touches[0]) startDrawing(e.touches[0]);
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches[0]) draw(e.touches[0]);
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            stopDrawing();
+        }, { passive: false });
+
+        function startDrawing(e) {
+            isDrawing = true;
+            draw(e);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.beginPath();
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            ctx.lineWidth = brushSize;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = currentColor;
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function saveEntry() {
+            const title = entryTitle.value.trim() || 'Untitled Entry';
+            const text = entryText.value.trim();
+            const imageData = canvas.toDataURL();
+            const date = new Date();
+
+            if (currentEntryId) {
+                const index = entries.findIndex(e => e.id === currentEntryId);
+                if (index !== -1) {
+                    entries[index] = {
+                        id: currentEntryId,
+                        title: title,
+                        text: text,
+                        date: date.toISOString(),
+                        image: imageData
+                    };
+                }
+            } else {
+                const entry = {
+                    id: Date.now(),
+                    title: title,
+                    text: text,
+                    date: date.toISOString(),
+                    image: imageData
+                };
+                entries.unshift(entry);
+            }
+
+            currentEntryId = null;
+            entryTitle.value = '';
+            entryText.value = '';
+            charCounter.textContent = '0 / 500';
+            charCounter.classList.remove('warning', 'limit');
+            clearCanvas();
+            renderEntries();
+            updateStats();
+            saveEntries();
+        }
+
+        function renderEntries() {
+            const displayEntries = currentView === 'active' ? entries : trashedEntries;
+            
+            if (displayEntries.length === 0) {
+                const emptyMessage = currentView === 'active' 
+                    ? 'No entries yet.<br>Start drawing to create your first entry!'
+                    : 'Trash is empty.<br>Deleted entries will appear here for 30 days.';
+                    
+                entriesList.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                            <path d="M7 12h2v2H7zm0-3h2v2H7zm0-3h2v2H7zm4 6h2v2h-2zm0-3h2v2h-2zm0-3h2v2h-2zm4 6h2v2h-2zm0-3h2v2h-2z"/>
+                        </svg>
+                        <p>${emptyMessage}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            entriesList.innerHTML = displayEntries.map(entry => {
+                const date = new Date(entry.date);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                let restoreInfo = '';
+                let actions = '';
+                
+                if (currentView === 'trash') {
+                    const daysLeft = Math.ceil((30 - (Date.now() - entry.trashedDate) / (24 * 60 * 60 * 1000)));
+                    restoreInfo = `<div class="restore-notice">Deletes in ${daysLeft} days</div>`;
+                    actions = `
+                        <button class="btn" onclick="event.stopPropagation(); restoreEntry(${entry.id})">Restore</button>
+                        <button class="btn secondary" onclick="event.stopPropagation(); openPermanentDeleteModal(${entry.id})">Delete Forever</button>
+                    `;
+                } else {
+                    actions = `<button class="btn secondary" onclick="event.stopPropagation(); openDeleteModal(${entry.id})">Delete</button>`;
+                }
+                
+                const textPreview = entry.text ? `<div class="entry-text-preview">${entry.text}</div>` : '';
+                
+                return `
+                    <div class="entry-card" onclick="loadEntry(${entry.id})">
+                        <h3>${entry.title}</h3>
+                        <div class="date">${dateStr}</div>
+                        ${textPreview}
+                        <img src="${entry.image}" alt="${entry.title}" class="preview">
+                        ${restoreInfo}
+                        <div class="entry-actions">
+                            ${actions}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadEntry(id) {
+            let entry = entries.find(e => e.id === id);
+            if (!entry && currentView === 'trash') {
+                entry = trashedEntries.find(e => e.id === id);
+            }
+            
+            if (entry) {
+                currentEntryId = entry.id;
+                entryTitle.value = entry.title;
+                entryText.value = entry.text || '';
+                
+                const length = entryText.value.length;
+                charCounter.textContent = `${length} / ${MAX_CHARS}`;
+                
+                clearCanvas();
+                
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                };
+                img.src = entry.image;
+            }
+        }
+
+        function switchView(view) {
+            currentView = view;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            renderEntries();
+        }
+
+        function openDeleteModal(id) {
+            deleteEntryId = id;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            deleteEntryId = null;
+            document.getElementById('deleteModal').classList.remove('active');
+        }
+
+        function confirmDelete() {
+            const entry = entries.find(e => e.id === deleteEntryId);
+            if (entry) {
+                entry.trashedDate = Date.now();
+                trashedEntries.unshift(entry);
+                entries = entries.filter(e => e.id !== deleteEntryId);
+                
+                if (currentEntryId === deleteEntryId) {
+                    currentEntryId = null;
+                    entryTitle.value = '';
+                    entryText.value = '';
+                    charCounter.textContent = '0 / 500';
+                    clearCanvas();
+                }
+                
+                renderEntries();
+                updateStats();
+                saveEntries();
+            }
+            closeDeleteModal();
+        }
+
+        function restoreEntry(id) {
+            const entry = trashedEntries.find(e => e.id === id);
+            if (entry) {
+                delete entry.trashedDate;
+                entries.unshift(entry);
+                trashedEntries = trashedEntries.filter(e => e.id !== id);
+                
+                renderEntries();
+                updateStats();
+                saveEntries();
+            }
+        }
+
+        function openPermanentDeleteModal(id) {
+            deleteEntryId = id;
+            document.getElementById('permanentDeleteModal').classList.add('active');
+        }
+
+        function closePermanentDeleteModal() {
+            deleteEntryId = null;
+            document.getElementById('permanentDeleteModal').classList.remove('active');
+        }
+
+        function confirmPermanentDelete() {
+            trashedEntries = trashedEntries.filter(e => e.id !== deleteEntryId);
+            renderEntries();
+            saveEntries();
+            closePermanentDeleteModal();
+        }
+
+        function updateStats() {
+            document.getElementById('totalEntries').textContent = entries.length;
+            
+            const now = new Date();
+            const thisMonth = entries.filter(e => {
+                const entryDate = new Date(e.date);
+                return entryDate.getMonth() === now.getMonth() && 
+                       entryDate.getFullYear() === now.getFullYear();
+            }).length;
+            document.getElementById('monthEntries').textContent = thisMonth;
+            
+            const streak = calculateStreak();
+            document.getElementById('streakDays').textContent = streak + ' day' + (streak !== 1 ? 's' : '');
+        }
+
+        function calculateStreak() {
+            if (entries.length === 0) return 0;
+            
+            const entryDates = [...new Set(entries.map(e => {
+                const d = new Date(e.date);
+                d.setHours(0, 0, 0, 0);
+                return d.getTime();
+            }))].sort((a, b) => b - a);
+
+            if (entryDates.length === 0) return 0;
+
+            let streak = 0;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const oneDay = 24 * 60 * 60 * 1000;
+            const mostRecent = new Date(entryDates[0]);
+            
+            if (mostRecent.getTime() !== today.getTime() && mostRecent.getTime() !== (today.getTime() - oneDay)) {
+                return 0;
+            }
+            
+            let checkTime = today.getTime();
+            
+            for (const time of entryDates) {
+                if (time === checkTime) {
+                    streak++;
+                    checkTime -= oneDay;
+                } else if (time === (checkTime - oneDay)) {
+                    if (streak === 0) {
+                         streak++;
+                         checkTime = time - oneDay;
+                    } else {
+                         break;
+                    }
+                } else if (time < checkTime) {
+                    break;
+                }
+            }
+            
+            return streak;
+        }
+
+        function exportData() {
+            const data = {
+                entries: entries,
+                trashedEntries: trashedEntries,
+                exportDate: new Date().toISOString(),
+                version: '2.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `drawmood-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (data.entries) {
+                        if (confirm('This will replace your current entries. Continue?')) {
+                            entries = data.entries || [];
+                            trashedEntries = data.trashedEntries || [];
+                            saveEntries();
+                            renderEntries();
+                            updateStats();
+                            alert('Backup imported successfully!');
+                        }
+                    } else {
+                        alert('Invalid backup file format.');
+                    }
+                } catch (error) {
+                    console.error('Import error:', error);
+                    alert('Failed to import backup. Please check the file format.');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        renderEntries();
+        updateStats();
+    </script>
+</body>
+</html>
